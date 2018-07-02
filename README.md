@@ -1,5 +1,5 @@
 # HAP
-<h1>Picar autonomous driving car</h1>
+<h3>Picar autonomous driving car</h3>
 
 ball_tracker_version0.1 : Picar의 카메라가 빨간색 공을 인식합니다. 공이 있는 방향으로 자동차가 움직이게 하는 소스입니다.
 
