@@ -95,7 +95,7 @@ def main():
             bw.stop()
 
             if scan_enable:
-                pan_angle = SCAN_POS[scan_count][0]
+                pan_angle = SCAN_POS[scan_count]
         
             if pan_enable:
                 pan_servo.write(pan_angle)
@@ -149,7 +149,7 @@ def main():
                     fw.turn(fw_angle)
     
                 if rear_wheels_enable:
-                    bw.speed = motor_speed - 15
+                    bw.speed = motor_speed - 5
                     bw.backward()
 
 def destroy():
