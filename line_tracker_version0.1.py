@@ -61,7 +61,7 @@ tilt_servo.write(60)
 cx = 0 
 cy = 0
 
-motor_speed = 45
+motor_speed = 60
 
 def nothing(x):
     pass

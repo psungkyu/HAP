@@ -12,7 +12,7 @@ import picar
 picar.setup()
 # Show image captured by camera, True to turn on, you will need #DISPLAY and it also slows the speed of tracking
 show_image_enable   = False
-draw_circle_enable  = False
+draw_circle_enable  = True
 scan_enable         = True
 rear_wheels_enable  = True
 front_wheels_enable = True
@@ -47,6 +47,7 @@ SCAN_POS = [50, 70, 90, 110, 130, 130, 110, 90, 70, 50]
 # Face detection set
 cascPath = '../../opencv/data/haarcascades/haarcascade_frontalface_alt.xml'
 
+Stop = False
 
 bw = back_wheels.Back_Wheels()
 fw = front_wheels.Front_Wheels()
@@ -65,7 +66,7 @@ tilt_servo.write(90)
 cx = 0 
 cy = 0
 
-motor_speed = 45
+motor_speed = 15
 
 def nothing(x):
     pass
@@ -85,50 +86,27 @@ def main():
         # Find the center of contour
         for i in range(10):
             (x, y) = find_blob(x, y)
-        
-        find_face()
 
-        # If the road is not found, False
-        if x == 0 and y == 0 : 
-            isFound = False
-        else :
-            isFound = True
-            scan_count = 0
-            
-        # Stop the car and Detect line
-        if isFound == False :
-            print 'scanning...'
-            bw.stop()
+        if x <= CENTER_X - 10:
+            print "Turn Left!"
 
-            if scan_enable:
-                pan_angle = SCAN_POS[scan_count][0]
-        
-            if pan_enable:
-                pan_servo.write(pan_angle)
-        
-            scan_count += 1
-        
-            # Finish driving after scanning
-            if scan_count >= len(SCAN_POS):
-                
-                print "End driving!"
-                bw.stop()
-                break
-            
-            else:
-                sleep(0.1)     
+        elif x < CENTER_X + 10 and x > CENTER_X - 10 :
+            print "On Track!"
 
-        # Car follows the road
-        else :
+        elif x >= CENTER_X + 10:
+            print "Turn Right"
+
+    
+        if Red_lightsOn() is False:
             delta_x = CENTER_X - x
             delta_y = CENTER_Y - y
 
-            print "x = %s, delta_x = %s" % (x, delta_x)
-            print "y = %s, delta_y = %s" % (y, delta_y)
+#            print "x = %s, delta_x = %s" % (x, delta_x)
+#            print "y = %s, delta_y = %s" % (y, delta_y)
                 
             # Degree for x-axis
             delta_angle = int(float(CAMERA_X_ANGLE) / SCREEN_WIDTH * delta_x)
-            print "delta_pan = %s" % delta_angle
+#            print "delta_pan = %s" % delta_angle
             fw_angle = adjusted_angle - delta_angle
             
             
@@ -157,7 +135,10 @@ def main():
                 if rear_wheels_enable:
                     bw.speed = motor_speed
                     bw.backward()
-
+        
+        else :
+            bw.stop()
+            
 def destroy():
     bw.stop()
     img.release()
@@ -192,10 +173,10 @@ def find_blob(prior_x, prior_y) :
     mask = cv2.inRange(hsv, lower_blue, upper_blue)
 
     # Remain only blue color area
-    res = cv2.bitwise_and(crop_image, crop_image, mask = mask)
+    # res = cv2.bitwise_and(crop_image, crop_image, mask = mask)
 
     # Color thresholding
-    ret, thresh = cv2.threshold(mask, 60, 255, cv2.THRESH_BINARY_INV)
+    #ret, thresh = cv2.threshold(mask, 60, 255, cv2.THRESH_BINARY_INV)
 
     # Find the contours of the frame
     contours, hierarchy = cv2.findContours(mask, 1, cv2.CHAIN_APPROX_NONE)
@@ -219,20 +200,10 @@ def find_blob(prior_x, prior_y) :
         cv2.line(crop_image,(0,cy),(1280,cy),(255,0,0),1)
         cv2.drawContours(crop_image, contours, -1, (0,255,0), 1)
 
-        if cx <= CENTER_X - 10:
-            print "Turn Left!"
-
-        elif cx < CENTER_X + 10 and cx > CENTER_X - 10 :
-            print "On Track!"
-
-        elif cx >= CENTER_X + 10:
-            print "Turn Right"
-
     else:
-        print "I don't see the line"
+        print "I can't detect the line"
         cx = 0
         cy = 0
-        print 'here'
 
     # Display the resulting frame
     cv2.imshow('frame',crop_image)
@@ -278,15 +249,15 @@ def find_face() :
         if cv2.waitKey(1) & 0xFF == ord('q') :
             print "interrupt!"
 
-def lightsOn() :
+def Red_lightsOn() :
     '''
     INPUT : X
-    OUTPUT : Red light returns 0,
-             Green light returns 1
+    OUTPUT : Red light returns True,
+             Green light returns False
     
     REFERENCE : Identify traffic light 
     '''
-
+    global Stop
 
     lower_red = np.array([160, 20, 70])
     upper_red = np.array([190, 255, 255])
@@ -294,52 +265,72 @@ def lightsOn() :
     lower_blue = np.array([110, 50, 50])    
     upper_blue = np.array([130, 255, 255])
     
-    while True :
+ 
+    # Load input image
+    _, bgr_image = img.read()
 
-        # Load input image
-        _, bgr_image = img.read()
+    # Crop the image
+    crop_image = bgr_image[60:240, 0:160]
 
-        # Crop the image
-        crop_image = bgr_image[60:240, 0:160]
+    # Convert to HSV
+    hsv = cv2.cvtColor(crop_image, cv2.COLOR_BGR2HSV)
+    hsv = cv2.blur(hsv, (5, 5))
 
-        # Convert to grayscale
-        hsv = cv2.cvtColor(crop_image, cv2.COLOR_BGR2HSV)
+    red_hue_range = cv2.inRange(hsv, (0, 100, 100), (10, 255, 255))
+    red_hue_image = cv2.GaussianBlur(red_hue_range, (9, 9), 2, 2)
+
+    # Use the Hough transform to detect circles in the combined threshold image
+    circles = cv2.HoughCircles(red_hue_image, cv.CV_HOUGH_GRADIENT, 1, 120, 100, 20, 10, 0);
+
+    # Loop over all detected circles and outline them on the original image        
+    all_r = np.array([])
+    if circles is not None:
+        for i in circles[0]:
+            all_r = np.append(all_r, int(round(i[2])))
         
-        #find the colors within the specified boundaries and apply
-        mask_red = cv2.inRange(hsv, lower_red, upper_red)
-        mask_blue = cv2.inRange(hsv, lower_blue, upper_blue)
+        closest_ball = all_r.argmax()
+        center=(int(round(circles[0][closest_ball][0])), int(round(circles[0][closest_ball][1])))
+        radius=int(round(circles[0][closest_ball][2]))
 
-        # Remain only blue color area
-    #    res = cv2.bitwise_and(crop_image, crop_image, mask = mask_red)
+        if draw_circle_enable and radius > 5:
+            cv2.circle(crop_image, center, radius, (0, 255, 0), 5);
+            print "Stop!"
+            Stop = True
 
-        # Color thresholding
-    #    ret, thresh = cv2.threshold(mask, 60, 255, cv2.THRESH_BINARY_INV)
+    else :        
+        blue_hue_range = cv2.inRange(hsv, (110, 100, 100), (130, 255, 255))
+        blue_hue_image = cv2.GaussianBlur(blue_hue_range, (9, 9), 2, 2)
 
-        # Find the contours of the frame
-        contours_red, hierarchy = cv2.findContours(mask_red, 1, cv2.CHAIN_APPROX_NONE)
-        cv2.drawContours(crop_image, contours_red, -1, (0, 0, 255), 1)
+        # Use the Hough transform to detect circles in the combined threshold image
+        circles = cv2.HoughCircles(blue_hue_image, cv.CV_HOUGH_GRADIENT, 1, 120, 100, 20, 10, 0);
 
-        contours_blue, hierarchy = cv2.findContours(mask_blue, 1, cv2.CHAIN_APPROX_NONE)
-        cv2.drawContours(crop_image, contours_blue, -1, (255, 0, 0), 1)
+        # Loop over all detected circles and outline them on the original image        
+        all_r = np.array([])
 
-        cv2.imshow('frame', crop_image)
-  #      cv2.imshow('mask_red', mask_red)
-   #     cv2.imshow('mask_blue', mask_blue)
-        if cv2.waitKey(1) & 0xFF == ord('q') :
-            print "interrupt!"
+        if circles is not None:
+            for i in circles[0]:
+                all_r = np.append(all_r, int(round(i[2])))
+            closest_ball = all_r.argmax()
+            center=(int(round(circles[0][closest_ball][0])), int(round(circles[0][closest_ball][1])))
+            radius=int(round(circles[0][closest_ball][2]))
+            if draw_circle_enable and radius > 5:
+                cv2.circle(crop_image, center, radius, (0, 255, 0), 5);
+                print "Go!"
+                Stop = False
 
-    # Find the biggest contour (if detected)
-    if len(contours_red) > 0:
-        return 0
+    cv2.imshow('frame', crop_image)
+    if cv2.waitKey(1) & 0xFF == ord('q') :
+        print "interrupt!"
 
-    if len(contours_blue) > 0:
-        return 1
-   
+    return Stop
+
+    
 if __name__ == '__main__':
+
     try:
-        #main()
+        main()
         #find_face()
-        lightsOn()
+        #lightsOn()
     except KeyboardInterrupt:
         destroy()
 

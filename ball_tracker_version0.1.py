@@ -220,6 +220,7 @@ def find_blob() :
             all_r = np.append(all_r, int(round(i[2])))
         closest_ball = all_r.argmax()
         center=(int(round(circles[0][closest_ball][0])), int(round(circles[0][closest_ball][1])))
+
         radius=int(round(circles[0][closest_ball][2]))
         if draw_circle_enable:
             cv2.circle(orig_image, center, radius, (0, 255, 0), 5);
