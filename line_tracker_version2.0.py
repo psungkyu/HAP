@@ -85,15 +85,6 @@ def main():
     	x = 0             # x initial in the middle
         y = 0             # y initial in the middle
         
-#        for i in range(10) :
-#        find_face() 
-
-        # Find the center of contour
-#        for i in range(10) :
-#            Red_lightsOn()
-
-#        if Stop is False:
-                
         # Find the center of contour
         for i in range(10):
             (x, y) = find_blob(x, y)
@@ -166,17 +157,7 @@ def main():
     
                 if rear_wheels_enable:
                     bw.speed = motor_speed - 5
-                    bw.backward()
-            
-#        else :
-#            bw.stop()
-            
-def destroy():
-    bw.stop()
-    img.release()
-
-def test():
-    fw.turn(90)
+                    bw.backward()            
 
 def find_blob(prior_x, prior_y) :
       
@@ -197,18 +178,13 @@ def find_blob(prior_x, prior_y) :
     upper_blue = np.array([130, 255, 255])
 
     '''
+    # Set red color range
     lower_red = np.array([160, 20, 70])
     upper_red - np.array([190, 255, 255])
     '''
 
     #find the colors within the specified boundaries and apply
     mask = cv2.inRange(hsv, lower_blue, upper_blue)
-
-    # Remain only blue color area
-    # res = cv2.bitwise_and(crop_image, crop_image, mask = mask)
-
-    # Color thresholding
-    #ret, thresh = cv2.threshold(mask, 60, 255, cv2.THRESH_BINARY_INV)
 
     # Find the contours of the frame
     contours, hierarchy = cv2.findContours(mask, 1, cv2.CHAIN_APPROX_NONE)
@@ -247,12 +223,18 @@ def find_blob(prior_x, prior_y) :
     return cx, cy
     
 def find_face() :
+    '''
+    INPUT : X
+    OUTPUT : X 
+    REFERENCE : Find front face 
+    '''
 
     faceCascade = cv2.CascadeClassifier(cascPath)
-    
+
+    if not faceCascade.load(cascPath) :
+        print "--(!)Error loading\n"
+
     while True :
-        if not faceCascade.load(cascPath) :
-            print "--(!)Error loading\n"
             
         # Load input image
         _, bgr_image = img.read()
@@ -262,15 +244,15 @@ def find_face() :
 
         # Convert to grayscale
         gray = cv2.cvtColor(crop_image, cv2.COLOR_BGR2GRAY)
-        
-        faces = faceCascade.detectMultiScale(
-            gray,
-            scaleFactor = 1.1,
-            minNeighbors = 5,
-            minSize = (30, 30),
-            flags = cv2.cv.CV_HAAR_SCALE_IMAGE
-        )
 
+        faces = faceCascade.detectMultiScale(
+                gray,
+                scaleFactor = 1.1,
+                minNeighbors = 5,
+                minSize = (30, 30),
+                flags = cv2.cv.CV_HAAR_SCALE_IMAGE
+        )
+            
         print "Found {0} faces!" .format(len(faces))
 
         # Draw a rectangle around the faces
@@ -278,6 +260,7 @@ def find_face() :
             cv2.rectangle(crop_image, (x,y), (x+w, y+h), (0,255,0), 2)
 
         cv2.imshow('frame',crop_image)
+        
         if cv2.waitKey(1) & 0xFF == ord('q') :
             print "interrupt!"
 
@@ -306,7 +289,6 @@ def Red_lightsOn() :
 
         # Convert to HSV
         hsv = cv2.cvtColor(crop_image, cv2.COLOR_BGR2HSV)
-#        hsv = cv2.blur(hsv, (5, 5))
 
         red_hue_range = cv2.inRange(hsv, (0, 100, 100), (10, 255, 255))
         red_hue_image = cv2.GaussianBlur(red_hue_range, (9, 9), 2, 2)
@@ -338,13 +320,14 @@ def Red_lightsOn() :
 
             # Loop over all detected circles and outline them on the original image        
             all_r = np.array([])
-
             if circles is not None:
                 for i in circles[0]:
                     all_r = np.append(all_r, int(round(i[2])))
+         
                 closest_ball = all_r.argmax()
                 center=(int(round(circles[0][closest_ball][0])), int(round(circles[0][closest_ball][1])))
                 radius=int(round(circles[0][closest_ball][2]))
+         
                 if draw_circle_enable and radius > 5:
                     cv2.circle(crop_image, center, radius, (0, 255, 0), 5);
                     print "Go!"
@@ -353,9 +336,6 @@ def Red_lightsOn() :
         cv2.imshow('frame', crop_image)
         if cv2.waitKey(1) & 0xFF == ord('q') :
             print "interrupt!"
-
-#    return Stop
-
     
 if __name__ == '__main__':
 
@@ -363,6 +343,7 @@ if __name__ == '__main__':
         #main()
         #find_face()
         Red_lightsOn()
+
     except KeyboardInterrupt:
         destroy()
 
