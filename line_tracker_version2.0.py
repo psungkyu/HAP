@@ -62,7 +62,7 @@ tilt_servo.offset = 0
 bw.speed = 0
 fw.turn(adjusted_angle)
 pan_servo.write(90)
-tilt_servo.write(90)
+tilt_servo.write(60)
 cx = 0 
 cy = 0  
 
@@ -72,6 +72,7 @@ def nothing(x):
     pass
 
 def main():
+
     global Stop
     pan_angle = 90              # initial angle for pan
     tilt_angle = 60             # initial angle for tilt
@@ -85,93 +86,90 @@ def main():
         y = 0             # y initial in the middle
         
 #        for i in range(10) :
-        find_face() 
+#        find_face() 
 
         # Find the center of contour
 #        for i in range(10) :
-        Red_lightsOn()
+#            Red_lightsOn()
 
-        if Stop is False:
+#        if Stop is False:
                 
-            x = 0             # x initial in the middle
-            y = 0             # y initial in the middle
-
-            # Find the center of contour
-            for i in range(10):
-                (x, y) = find_blob(x, y)
-            
-            # If the road is not found, False
-            if x == 0 and y == 0 : 
-                isFound = False
-            else :
-                isFound = True
-                scan_count = 0
-                
-            # Stop the car and Detect line
-            if isFound == False :
-                print 'scanning...'
-                bw.stop()
-
-                if scan_enable:
-                    pan_angle = SCAN_POS[scan_count]
-            
-                if pan_enable:
-                    pan_servo.write(pan_angle)
-            
-                scan_count += 1
-            
-                # Finish driving after scanning
-                if scan_count >= len(SCAN_POS):
-                    
-                    print "End driving!"
-                    bw.stop()
-                    break
-                
-                else:
-                    sleep(0.1)     
-
-            # Car follows the road
-            else :
-                delta_x = CENTER_X - x
-                delta_y = CENTER_Y - y
-
-                print "x = %s, delta_x = %s" % (x, delta_x)
-                print "y = %s, delta_y = %s" % (y, delta_y)
-                    
-                # Degree for x-axis
-                delta_angle = int(float(CAMERA_X_ANGLE) / SCREEN_WIDTH * delta_x)
-                print "delta_pan = %s" % delta_angle
-                fw_angle = adjusted_angle - delta_angle
-                
-                
-                if fw_angle > FW_ANGLE_MAX:
-                    fw_angle = FW_ANGLE_MAX
-                elif fw_angle < FW_ANGLE_MIN:
-                    fw_angle = FW_ANGLE_MIN
-                
-                # Normal range
-                if FW_ANGLE_MIN < fw_angle and fw_angle < FW_ANGLE_MAX:
-                    if front_wheels_enable:
-                        fw.turn(fw_angle)
-                        
-                    if rear_wheels_enable:
-                        bw.speed = motor_speed
-                        bw.forward()
-
-                # Out of range
-                else:
-                    bw.stop()
-                    fw_angle = (adjusted_angle - fw_angle) + adjusted_angle
-
-                    if front_wheels_enable:                
-                        fw.turn(fw_angle)
+        # Find the center of contour
+        for i in range(10):
+            (x, y) = find_blob(x, y)
         
-                    if rear_wheels_enable:
-                        bw.speed = motor_speed - 5
-                        bw.backward()
-            
+        # If the road is not found, False
+        if x == 0 and y == 0 : 
+            isFound = False
         else :
+            isFound = True
+            scan_count = 0
+            
+        # Stop the car and Detect line
+        if isFound == False :
+            print 'scanning...'
             bw.stop()
+
+            if scan_enable:
+                pan_angle = SCAN_POS[scan_count]
+        
+            if pan_enable:
+                pan_servo.write(pan_angle)
+        
+            scan_count += 1
+        
+            # Finish driving after scanning
+            if scan_count >= len(SCAN_POS):
+                
+                print "End driving!"
+                bw.stop()
+                break
+            
+            else:
+                sleep(0.1)     
+
+        # Car follows the road
+        else :
+            delta_x = CENTER_X - x
+            delta_y = CENTER_Y - y
+
+            print "x = %s, delta_x = %s" % (x, delta_x)
+            print "y = %s, delta_y = %s" % (y, delta_y)
+                
+            # Degree for x-axis
+            delta_angle = int(float(CAMERA_X_ANGLE) / SCREEN_WIDTH * delta_x)
+            print "delta_pan = %s" % delta_angle
+            fw_angle = adjusted_angle - delta_angle
+            
+            
+            if fw_angle > FW_ANGLE_MAX:
+                fw_angle = FW_ANGLE_MAX
+            elif fw_angle < FW_ANGLE_MIN:
+                fw_angle = FW_ANGLE_MIN
+            
+            # Normal range
+            if FW_ANGLE_MIN < fw_angle and fw_angle < FW_ANGLE_MAX:
+                if front_wheels_enable:
+                    fw.turn(fw_angle)
+                    
+                if rear_wheels_enable:
+                    bw.speed = motor_speed
+                    bw.forward()
+
+            # Out of range
+            else:
+                bw.stop()
+                fw_angle = (adjusted_angle - fw_angle) + adjusted_angle
+
+                if front_wheels_enable:                
+                    fw.turn(fw_angle)
+    
+                if rear_wheels_enable:
+                    bw.speed = motor_speed - 5
+                    bw.backward()
+            
+#        else :
+#            bw.stop()
             
 def destroy():
     bw.stop()
@@ -252,36 +250,36 @@ def find_face() :
 
     faceCascade = cv2.CascadeClassifier(cascPath)
     
-#    while True :
-    if not faceCascade.load(cascPath) :
-        print "--(!)Error loading\n"
+    while True :
+        if not faceCascade.load(cascPath) :
+            print "--(!)Error loading\n"
+            
+        # Load input image
+        _, bgr_image = img.read()
         
-    # Load input image
-    _, bgr_image = img.read()
-    
-    # Crop the image
-    crop_image = bgr_image[60:240, 0:160]
+        # Crop the image
+        crop_image = bgr_image[60:240, 0:160]
 
-    # Convert to grayscale
-    gray = cv2.cvtColor(crop_image, cv2.COLOR_BGR2GRAY)
-    
-    faces = faceCascade.detectMultiScale(
-        gray,
-        scaleFactor = 1.1,
-        minNeighbors = 5,
-        minSize = (30, 30),
-        flags = cv2.cv.CV_HAAR_SCALE_IMAGE
-    )
+        # Convert to grayscale
+        gray = cv2.cvtColor(crop_image, cv2.COLOR_BGR2GRAY)
+        
+        faces = faceCascade.detectMultiScale(
+            gray,
+            scaleFactor = 1.1,
+            minNeighbors = 5,
+            minSize = (30, 30),
+            flags = cv2.cv.CV_HAAR_SCALE_IMAGE
+        )
 
-    print "Found {0} faces!" .format(len(faces))
+        print "Found {0} faces!" .format(len(faces))
 
-    # Draw a rectangle around the faces
-    for (x, y, w, h) in faces:
-        cv2.rectangle(crop_image, (x,y), (x+w, y+h), (0,255,0), 2)
+        # Draw a rectangle around the faces
+        for (x, y, w, h) in faces:
+            cv2.rectangle(crop_image, (x,y), (x+w, y+h), (0,255,0), 2)
 
-    cv2.imshow('frame',crop_image)
-    if cv2.waitKey(1) & 0xFF == ord('q') :
-        print "interrupt!"
+        cv2.imshow('frame',crop_image)
+        if cv2.waitKey(1) & 0xFF == ord('q') :
+            print "interrupt!"
 
 def Red_lightsOn() :
     '''
@@ -299,61 +297,62 @@ def Red_lightsOn() :
     lower_blue = np.array([110, 50, 50])    
     upper_blue = np.array([130, 255, 255])
     
-    # Load input image
-    _, bgr_image = img.read()
+    while True :
+        # Load input image
+        _, bgr_image = img.read()
 
-    # Crop the image
-    crop_image = bgr_image[60:240, 0:160]
+        # Crop the image
+        crop_image = bgr_image[60:240, 0:160]
 
-    # Convert to HSV
-    hsv = cv2.cvtColor(crop_image, cv2.COLOR_BGR2HSV)
-    hsv = cv2.blur(hsv, (5, 5))
+        # Convert to HSV
+        hsv = cv2.cvtColor(crop_image, cv2.COLOR_BGR2HSV)
+#        hsv = cv2.blur(hsv, (5, 5))
 
-    red_hue_range = cv2.inRange(hsv, (0, 100, 100), (10, 255, 255))
-    red_hue_image = cv2.GaussianBlur(red_hue_range, (9, 9), 2, 2)
-
-    # Use the Hough transform to detect circles in the combined threshold image
-    circles = cv2.HoughCircles(red_hue_image, cv.CV_HOUGH_GRADIENT, 1, 120, 100, 20, 10, 0);
-
-    # Loop over all detected circles and outline them on the original image        
-    all_r = np.array([])
-    if circles is not None:
-        for i in circles[0]:
-            all_r = np.append(all_r, int(round(i[2])))
-        
-        closest_ball = all_r.argmax()
-        center=(int(round(circles[0][closest_ball][0])), int(round(circles[0][closest_ball][1])))
-        radius=int(round(circles[0][closest_ball][2]))
-
-        if draw_circle_enable and radius > 5:
-            cv2.circle(crop_image, center, radius, (0, 255, 0), 5);
-            print "Stop!"
-            Stop = True
-
-    else :        
-        blue_hue_range = cv2.inRange(hsv, (110, 100, 100), (130, 255, 255))
-        blue_hue_image = cv2.GaussianBlur(blue_hue_range, (9, 9), 2, 2)
+        red_hue_range = cv2.inRange(hsv, (0, 100, 100), (10, 255, 255))
+        red_hue_image = cv2.GaussianBlur(red_hue_range, (9, 9), 2, 2)
 
         # Use the Hough transform to detect circles in the combined threshold image
-        circles = cv2.HoughCircles(blue_hue_image, cv.CV_HOUGH_GRADIENT, 1, 120, 100, 20, 10, 0);
+        circles = cv2.HoughCircles(red_hue_image, cv.CV_HOUGH_GRADIENT, 1, 120, 100, 20, 10, 0);
 
         # Loop over all detected circles and outline them on the original image        
         all_r = np.array([])
-
         if circles is not None:
             for i in circles[0]:
                 all_r = np.append(all_r, int(round(i[2])))
+            
             closest_ball = all_r.argmax()
             center=(int(round(circles[0][closest_ball][0])), int(round(circles[0][closest_ball][1])))
             radius=int(round(circles[0][closest_ball][2]))
+
             if draw_circle_enable and radius > 5:
                 cv2.circle(crop_image, center, radius, (0, 255, 0), 5);
-                print "Go!"
-                Stop = False
+                print "Stop!"
+                Stop = True
 
-    cv2.imshow('frame', crop_image)
-    if cv2.waitKey(1) & 0xFF == ord('q') :
-        print "interrupt!"
+        else :        
+            blue_hue_range = cv2.inRange(hsv, (110, 100, 100), (130, 255, 255))
+            blue_hue_image = cv2.GaussianBlur(blue_hue_range, (9, 9), 2, 2)
+
+            # Use the Hough transform to detect circles in the combined threshold image
+            circles = cv2.HoughCircles(blue_hue_image, cv.CV_HOUGH_GRADIENT, 1, 120, 100, 20, 10, 0);
+
+            # Loop over all detected circles and outline them on the original image        
+            all_r = np.array([])
+
+            if circles is not None:
+                for i in circles[0]:
+                    all_r = np.append(all_r, int(round(i[2])))
+                closest_ball = all_r.argmax()
+                center=(int(round(circles[0][closest_ball][0])), int(round(circles[0][closest_ball][1])))
+                radius=int(round(circles[0][closest_ball][2]))
+                if draw_circle_enable and radius > 5:
+                    cv2.circle(crop_image, center, radius, (0, 255, 0), 5);
+                    print "Go!"
+                    Stop = False
+
+        cv2.imshow('frame', crop_image)
+        if cv2.waitKey(1) & 0xFF == ord('q') :
+            print "interrupt!"
 
 #    return Stop
 
@@ -361,9 +360,9 @@ def Red_lightsOn() :
 if __name__ == '__main__':
 
     try:
-        main()
+        #main()
         #find_face()
-        #lightsOn()
+        Red_lightsOn()
     except KeyboardInterrupt:
         destroy()
 
