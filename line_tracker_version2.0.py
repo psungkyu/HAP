@@ -291,7 +291,8 @@ def Red_lightsOn() :
         hsv = cv2.cvtColor(crop_image, cv2.COLOR_BGR2HSV)
 
         red_hue_range = cv2.inRange(hsv, (0, 100, 100), (10, 255, 255))
-        red_hue_image = cv2.GaussianBlur(red_hue_range, (9, 9), 2, 2)
+#        red_hue_image = cv2.GaussianBlur(red_hue_range, (9, 9), 2, 2)
+        red_hue_image = cv2.medianBlur(red_hue_range, 5)
 
         # Use the Hough transform to detect circles in the combined threshold image
         circles = cv2.HoughCircles(red_hue_image, cv.CV_HOUGH_GRADIENT, 1, 120, 100, 20, 10, 0);
@@ -313,7 +314,9 @@ def Red_lightsOn() :
 
         else :        
             blue_hue_range = cv2.inRange(hsv, (110, 100, 100), (130, 255, 255))
-            blue_hue_image = cv2.GaussianBlur(blue_hue_range, (9, 9), 2, 2)
+#            blue_hue_image = cv2.GaussianBlur(blue_hue_range, (9, 9), 2, 2)
+
+            blue_hue_image = cv2.medianBlur(blue_hue_range, 5)
 
             # Use the Hough transform to detect circles in the combined threshold image
             circles = cv2.HoughCircles(blue_hue_image, cv.CV_HOUGH_GRADIENT, 1, 120, 100, 20, 10, 0);
