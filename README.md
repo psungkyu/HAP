@@ -12,3 +12,5 @@ line_tracker_version0.9 : line_tracker_version0.1 + Face_detection()코드가 �
 
 line_tracker_version1.0 : line_tracker_version0.9 에 lightOn()코드가 추가되어 있는 소스입니다.
                           * lightOn() function은 신호등의 색깔을 인식합니다. 아직 작업 중에 있습니다.(2017. 07. 02.)
+                          
+                          완료된 코드입니다. 자동차의 카메라가 빨간원을 인식하면 멈춥니다. 파란원을 인식하면 출발합니다.(2017. 07. 04.)
