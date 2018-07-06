@@ -159,6 +159,10 @@ def main():
                     bw.speed = motor_speed - 5
                     bw.backward()            
 
+def destroy():
+    bw.stop()
+    img.release()
+
 def find_blob(prior_x, prior_y) :
       
     # Load input image
@@ -343,9 +347,9 @@ def Red_lightsOn() :
 if __name__ == '__main__':
 
     try:
-        #main()
+        main()
         #find_face()
-        Red_lightsOn()
+        #Red_lightsOn()
 
     except KeyboardInterrupt:
         destroy()
