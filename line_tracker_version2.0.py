@@ -166,9 +166,6 @@ def find_blob(prior_x, prior_y) :
     
     # Crop the image
     crop_image = bgr_image[60:240, 0:160]
-
-    # Convert to grayscale
-    gray = cv2.cvtColor(crop_image, cv2.COLOR_BGR2GRAY)
     
     # Converts images from BGR to HSV
     hsv = cv2.cvtColor(crop_image, cv2.COLOR_BGR2HSV)
@@ -223,12 +220,14 @@ def find_blob(prior_x, prior_y) :
     return cx, cy
     
 def find_face() :
+
     '''
     INPUT : X
     OUTPUT : X 
     REFERENCE : Find front face 
     '''
 
+    # Set up the route for front_face.xml
     faceCascade = cv2.CascadeClassifier(cascPath)
 
     if not faceCascade.load(cascPath) :
@@ -291,7 +290,8 @@ def Red_lightsOn() :
         hsv = cv2.cvtColor(crop_image, cv2.COLOR_BGR2HSV)
 
         red_hue_range = cv2.inRange(hsv, (0, 100, 100), (10, 255, 255))
-#        red_hue_image = cv2.GaussianBlur(red_hue_range, (9, 9), 2, 2)
+
+#       red_hue_image = cv2.GaussianBlur(red_hue_range, (9, 9), 2, 2)
         red_hue_image = cv2.medianBlur(red_hue_range, 5)
 
         # Use the Hough transform to detect circles in the combined threshold image
@@ -299,6 +299,7 @@ def Red_lightsOn() :
 
         # Loop over all detected circles and outline them on the original image        
         all_r = np.array([])
+
         if circles is not None:
             for i in circles[0]:
                 all_r = np.append(all_r, int(round(i[2])))
@@ -308,21 +309,20 @@ def Red_lightsOn() :
             radius=int(round(circles[0][closest_ball][2]))
 
             if draw_circle_enable and radius > 5:
-                cv2.circle(crop_image, center, radius, (0, 255, 0), 5);
+                cv2.circle(crop_image, center, radius, (0, 255, 0), 2);
                 print "Stop!"
                 Stop = True
 
         else :        
             blue_hue_range = cv2.inRange(hsv, (110, 100, 100), (130, 255, 255))
-#            blue_hue_image = cv2.GaussianBlur(blue_hue_range, (9, 9), 2, 2)
 
+#           blue_hue_image = cv2.GaussianBlur(blue_hue_range, (9, 9), 2, 2)
             blue_hue_image = cv2.medianBlur(blue_hue_range, 5)
 
             # Use the Hough transform to detect circles in the combined threshold image
             circles = cv2.HoughCircles(blue_hue_image, cv.CV_HOUGH_GRADIENT, 1, 120, 100, 20, 10, 0);
 
             # Loop over all detected circles and outline them on the original image        
-            all_r = np.array([])
             if circles is not None:
                 for i in circles[0]:
                     all_r = np.append(all_r, int(round(i[2])))
@@ -332,7 +332,7 @@ def Red_lightsOn() :
                 radius=int(round(circles[0][closest_ball][2]))
          
                 if draw_circle_enable and radius > 5:
-                    cv2.circle(crop_image, center, radius, (0, 255, 0), 5);
+                    cv2.circle(crop_image, center, radius, (0, 255, 0), 2);
                     print "Go!"
                     Stop = False
 
