@@ -17,7 +17,7 @@ scan_enable         = True
 rear_wheels_enable  = True
 front_wheels_enable = True
 pan_enable          = True
-adjusted_angle      = 75
+adjusted_angle      = 75    # Calibrate the wheel whose direction is straight
 
 kernel = np.ones((5,5),np.uint8)
 img = cv2.VideoCapture(-1)  # choose a video
@@ -26,8 +26,9 @@ SCREEN_WIDTH = 160  # Screen width
 SCREEN_HEIGHT = 120  # Screen Hight
 img.set(3,SCREEN_WIDTH)
 img.set(4,SCREEN_HEIGHT)
-CENTER_X = SCREEN_WIDTH/2
-CENTER_Y = SCREEN_HEIGHT/2
+
+CENTER_X = SCREEN_WIDTH/2   #x coordinate of center of screen 
+CENTER_Y = SCREEN_HEIGHT/2  #y coordinate of center of screen
 
 # Camera setting
 CAMERA_STEP = 2
@@ -42,12 +43,13 @@ TILT_ANGLE_MIN  = 20
 FW_ANGLE_MAX    = adjusted_angle+30
 FW_ANGLE_MIN    = adjusted_angle-30
 
-SCAN_POS = [50, 70, 90, 110, 130, 130, 110, 90, 70, 50]
+SCAN_POS = [50, 70, 90, 110, 130, 130, 110, 90, 70, 50] # range of sanning angle
 
-# Face detection set
+# Front face detection data set
 cascPath = '../../opencv/data/haarcascades/haarcascade_frontalface_alt.xml'
 
-Stop = False
+Stop = False    #global variable, if Stop is True, Car have to stop.
+                #                 if Stop is False, Car have to go.
 
 bw = back_wheels.Back_Wheels()
 fw = front_wheels.Front_Wheels()
@@ -79,7 +81,7 @@ def main():
     fw_angle = adjusted_angle   # initial angle for forward angle
   
     print("Begin!")
-    scan_count = 0
+    scan_count = 0              # Count designated direction
 
     while True: 
     	x = 0             # x initial in the middle
@@ -89,7 +91,7 @@ def main():
         for i in range(10):
             (x, y) = find_blob(x, y)
         
-        # If the road is not found, False
+        # If the road isn't found, isFound is False
         if x == 0 and y == 0 : 
             isFound = False
         else :
@@ -121,18 +123,22 @@ def main():
 
         # Car follows the road
         else :
-            delta_x = CENTER_X - x
+            '''
+            The variation beteen CENTER of camera screen(CENTER_X, CENTER_Y) and the point which 
+            means the CENTER of the road(x, y) decides how much the wheel have to move(delta_x, delta_y)
+            '''
+            delta_x = CENTER_X - x      
             delta_y = CENTER_Y - y
 
             print "x = %s, delta_x = %s" % (x, delta_x)
             print "y = %s, delta_y = %s" % (y, delta_y)
                 
             # Degree for x-axis
-            delta_angle = int(float(CAMERA_X_ANGLE) / SCREEN_WIDTH * delta_x)
+            delta_angle = int(float(CAMERA_X_ANGLE) / SCREEN_WIDTH * delta_x) #Convert distance to angle
             print "delta_pan = %s" % delta_angle
-            fw_angle = adjusted_angle - delta_angle
+            fw_angle = adjusted_angle - delta_angle #Calculate forward angle 
             
-            
+            # Front-wheel can move from FW_ANGLE_MIN to FW_ANGLE_MAX
             if fw_angle > FW_ANGLE_MAX:
                 fw_angle = FW_ANGLE_MAX
             elif fw_angle < FW_ANGLE_MIN:
@@ -149,22 +155,35 @@ def main():
 
             # Out of range
             else:
+                '''
+                If fw_angle is over the range, they cannot move right way. So, they have to move back and  
+                turn the wheel the opposite way. This algorithm makes car move right direction.
+                '''
                 bw.stop()
-                fw_angle = (adjusted_angle - fw_angle) + adjusted_angle
+                fw_angle = (adjusted_angle - fw_angle) + adjusted_angle #Opposite direction of original way.
 
                 if front_wheels_enable:                
                     fw.turn(fw_angle)
-    
+                
                 if rear_wheels_enable:
                     bw.speed = motor_speed - 5
                     bw.backward()            
 
 def destroy():
+    '''
+    INPUT : X
+    OUTPUT : X
+    REFERENCE : Makes car stop and end program.
+    '''
     bw.stop()
     img.release()
 
 def find_blob(prior_x, prior_y) :
-      
+    '''
+    INPUT : X
+    OUTPUT : the (x, y) coordinate of center of road.
+    REFERENCE : 
+    '''
     # Load input image
     _, bgr_image = img.read()
     
