@@ -102,10 +102,12 @@ def main():
         if isFound == False :
             print 'scanning...'
             bw.stop()
-
+            
+            # Take the value of angle 
             if scan_enable:
                 pan_angle = SCAN_POS[scan_count]
-        
+            
+            # Move the pan-servo motor
             if pan_enable:
                 pan_servo.write(pan_angle)
         
@@ -146,9 +148,12 @@ def main():
             
             # Normal range
             if FW_ANGLE_MIN < fw_angle and fw_angle < FW_ANGLE_MAX:
+
+                # Turn forward wheel
                 if front_wheels_enable:
                     fw.turn(fw_angle)
-                    
+                
+                # Move forward
                 if rear_wheels_enable:
                     bw.speed = motor_speed
                     bw.forward()
@@ -161,10 +166,12 @@ def main():
                 '''
                 bw.stop()
                 fw_angle = (adjusted_angle - fw_angle) + adjusted_angle #Opposite direction of original way.
-
+                
+                # Turn the wheel the opposite side
                 if front_wheels_enable:                
                     fw.turn(fw_angle)
                 
+                # Make backward speed down to protect (cx, cy) from being removed in the screen 
                 if rear_wheels_enable:
                     bw.speed = motor_speed - 5
                     bw.backward()            
@@ -215,7 +222,7 @@ def find_blob() :
         c = max(contours, key=cv2.contourArea)  #Choose the maximum area 
         M = cv2.moments(c)                      #Find center of the area
 
-        # No exist contour, Use the prior coordinate
+        # No exist contour, Use the center coordinate
         if M['m00'] == 0.0 :
             cx = CENTER_X
             cy = CENTER_Y
@@ -327,15 +334,18 @@ def Red_lightsOn() :
             closest_ball        = all_r.argmax()
             center              = (int(round(circles[0][closest_ball][0])), int(round(circles[0][closest_ball][1])))
             radius              = int(round(circles[0][closest_ball][2]))
-
+            
+            # If red light is closed enough, then draw the circle
             if draw_circle_enable and radius > 5:
                 cv2.circle(crop_image, center, radius, (0, 255, 0), 2);
                 print "Stop!"
                 Stop = True
 
-        else :        
+        else : 
+            # Capture the color range
             blue_hue_range = cv2.inRange(hsv, (110, 100, 100), (130, 255, 255))
-
+            
+            # Use median blur filter
             blue_hue_image = cv2.medianBlur(blue_hue_range, 5)
 
             # Use the Hough transform to detect circles in the combined threshold image
@@ -349,13 +359,17 @@ def Red_lightsOn() :
                 closest_ball        = all_r.argmax()
                 center              = (int(round(circles[0][closest_ball][0])), int(round(circles[0][closest_ball][1])))
                 radius              = int(round(circles[0][closest_ball][2]))
-         
+                
+                # If blue light is closed enough, then draw the circle
                 if draw_circle_enable and radius > 5:
                     cv2.circle(crop_image, center, radius, (0, 255, 0), 2);
                     print "Go!"
                     Stop = False
-
+        
+        # Show image 
         cv2.imshow('frame', crop_image)
+
+
         if cv2.waitKey(1) & 0xFF == ord('q') :
             print "interrupt!"
     
