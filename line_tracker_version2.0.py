@@ -17,7 +17,7 @@ scan_enable         = True
 rear_wheels_enable  = True
 front_wheels_enable = True
 pan_enable          = True
-adjusted_angle      = 75    # Calibrate the wheel whose direction is straight
+adjusted_angle      = 75    # Calibrate the front wheel angle whose direction is straight
 
 kernel = np.ones((5,5),np.uint8)
 img = cv2.VideoCapture(-1)  # choose a video
@@ -89,7 +89,7 @@ def main():
         
         # Find the center of contour
         for i in range(10):
-            (x, y) = find_blob(x, y)
+            (x, y) = find_blob()
         
         # If the road isn't found, isFound is False
         if x == 0 and y == 0 : 
@@ -178,7 +178,7 @@ def destroy():
     bw.stop()
     img.release()
 
-def find_blob(prior_x, prior_y) :
+def find_blob() :
     '''
     INPUT : X
     OUTPUT : the (x, y) coordinate of center of road.
@@ -212,8 +212,8 @@ def find_blob(prior_x, prior_y) :
     # Find the biggest contour (if detected)
     if len(contours) > 0:
         
-        c = max(contours, key=cv2.contourArea)
-        M = cv2.moments(c)
+        c = max(contours, key=cv2.contourArea)  #Choose the maximum area 
+        M = cv2.moments(c)                      #Find center of the area
 
         # No exist contour, Use the prior coordinate
         if M['m00'] == 0.0 :
@@ -224,9 +224,9 @@ def find_blob(prior_x, prior_y) :
             cx = int(M['m10']/M['m00'])
             cy = int(M['m01']/M['m00'])
 
-        cv2.line(crop_image,(cx,0),(cx,720),(255,0,0),1)
-        cv2.line(crop_image,(0,cy),(1280,cy),(255,0,0),1)
-        cv2.drawContours(crop_image, contours, -1, (0,255,0), 1)
+        cv2.line(crop_image,(cx,0),(cx,720),(255,0,0),1)            #draw x-axis with blue line
+        cv2.line(crop_image,(0,cy),(1280,cy),(255,0,0),1)           #draw y-axis with blue line
+        cv2.drawContours(crop_image, contours, -1, (0,255,0), 1)    #draw contour with green line
 
     else:
         print "I can't detect the line"
@@ -243,13 +243,11 @@ def find_blob(prior_x, prior_y) :
     return cx, cy
     
 def find_face() :
-
     '''
     INPUT : X
     OUTPUT : X 
     REFERENCE : Find front face 
     '''
-
     # Set up the route for front_face.xml
     faceCascade = cv2.CascadeClassifier(cascPath)
 
@@ -290,8 +288,7 @@ def Red_lightsOn() :
     '''
     INPUT : X
     OUTPUT : Red light returns True,
-             Green light returns False
-    
+             Green light returns False 
     REFERENCE : Identify traffic light 
     '''
     global Stop
@@ -314,7 +311,7 @@ def Red_lightsOn() :
 
         red_hue_range = cv2.inRange(hsv, (0, 100, 100), (10, 255, 255))
 
-#       red_hue_image = cv2.GaussianBlur(red_hue_range, (9, 9), 2, 2)
+        # Use median filter to erase outlier(==noise)
         red_hue_image = cv2.medianBlur(red_hue_range, 5)
 
         # Use the Hough transform to detect circles in the combined threshold image
@@ -327,9 +324,9 @@ def Red_lightsOn() :
             for i in circles[0]:
                 all_r = np.append(all_r, int(round(i[2])))
             
-            closest_ball = all_r.argmax()
-            center=(int(round(circles[0][closest_ball][0])), int(round(circles[0][closest_ball][1])))
-            radius=int(round(circles[0][closest_ball][2]))
+            closest_ball        = all_r.argmax()
+            center              = (int(round(circles[0][closest_ball][0])), int(round(circles[0][closest_ball][1])))
+            radius              = int(round(circles[0][closest_ball][2]))
 
             if draw_circle_enable and radius > 5:
                 cv2.circle(crop_image, center, radius, (0, 255, 0), 2);
@@ -339,7 +336,6 @@ def Red_lightsOn() :
         else :        
             blue_hue_range = cv2.inRange(hsv, (110, 100, 100), (130, 255, 255))
 
-#           blue_hue_image = cv2.GaussianBlur(blue_hue_range, (9, 9), 2, 2)
             blue_hue_image = cv2.medianBlur(blue_hue_range, 5)
 
             # Use the Hough transform to detect circles in the combined threshold image
@@ -350,9 +346,9 @@ def Red_lightsOn() :
                 for i in circles[0]:
                     all_r = np.append(all_r, int(round(i[2])))
          
-                closest_ball = all_r.argmax()
-                center=(int(round(circles[0][closest_ball][0])), int(round(circles[0][closest_ball][1])))
-                radius=int(round(circles[0][closest_ball][2]))
+                closest_ball        = all_r.argmax()
+                center              = (int(round(circles[0][closest_ball][0])), int(round(circles[0][closest_ball][1])))
+                radius              = int(round(circles[0][closest_ball][2]))
          
                 if draw_circle_enable and radius > 5:
                     cv2.circle(crop_image, center, radius, (0, 255, 0), 2);
