@@ -200,10 +200,14 @@ def find_blob() :
     # Converts images from BGR to HSV
     hsv = cv2.cvtColor(crop_image, cv2.COLOR_BGR2HSV)
     
+    '''
     # Set blue color range
     lower_blue = np.array([110, 50, 50])    
     upper_blue = np.array([130, 255, 255])
-
+    '''
+    # Set black color range
+    lower_black = np.array([0, 0, 0])
+    upper_black = np.array([180, 255, 30])
     '''
     # Set red color range
     lower_red = np.array([160, 20, 70])
@@ -211,7 +215,7 @@ def find_blob() :
     '''
 
     #find the colors within the specified boundaries and apply
-    mask = cv2.inRange(hsv, lower_blue, upper_blue)
+    mask = cv2.inRange(hsv, lower_black, upper_black)
 
     # Find the contours of the frame
     contours, hierarchy = cv2.findContours(mask, 1, cv2.CHAIN_APPROX_NONE)
